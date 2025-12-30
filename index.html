@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cursor Heatmap Explorer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Heatmap.js CDN -->
+<script src="https://unpkg.com/heatmap.js@2.0.5/heatmap.min.js"></script>
+
+<style>
+/* ===== RESET ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+/* ===== BACKGROUND ===== */
+body {
+  min-height: 100vh;
+  background: linear-gradient(120deg, #0f172a, #020617);
+  color: white;
+  padding: 20px;
+}
+
+/* ===== HERO ===== */
+h1 {
+  text-align: center;
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+
+p {
+  text-align: center;
+  opacity: 0.8;
+  margin-bottom: 30px;
+}
+
+/* ===== SITE CARDS ===== */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.card {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(12px);
+  border-radius: 14px;
+  padding: 10px;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px rgba(0,255,255,0.3);
+}
+
+.card img {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.card h3 {
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* ===== VIEWER ===== */
+.viewer {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+}
+
+/* Screenshot */
+#siteImage {
+  width: 100%;
+  display: block;
+}
+
+/* Heatmap overlay */
+#heatmapContainer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* ===== CONTROLS ===== */
+.controls {
+  margin-top: 20px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(12px);
+  border-radius: 14px;
+  padding: 15px;
+}
+
+label {
+  display: block;
+  margin: 10px 0 5px;
+}
+
+input, select {
+  width: 100%;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Cursor Heatmap Explorer</h1>
+<p>Stylized attention heatmaps of famous websites</p>
+
+<!-- WEBSITE SELECTOR -->
+<div class="cards">
+  <div class="card" onclick="loadSite('google')">
+    <img src="https://i.imgur.com/UYiroys.png">
+    <h3>Google</h3>
+  </div>
+
+  <div class="card" onclick="loadSite('apple')">
+    <img src="https://i.imgur.com/zvWTUVu.jpg">
+    <h3>Apple</h3>
+  </div>
+
+  <div class="card" onclick="loadSite('youtube')">
+    <img src="https://i.imgur.com/1FJzv8K.jpg">
+    <h3>YouTube</h3>
+  </div>
+</div>
+
+<!-- HEATMAP VIEWER -->
+<div class="viewer">
+  <img id="siteImage">
+  <div id="heatmapContainer"></div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <label>Intensity</label>
+  <input type="range" min="0.5" max="2" step="0.1" value="1" id="intensity">
+
+  <label>Color Scheme</label>
+  <select id="colors">
+    <option value="classic">Classic</option>
+    <option value="neon">Neon</option>
+    <option value="ice">Ice</option>
+  </select>
+</div>
+
+<script>
+/* ===== HEATMAP SETUP ===== */
+const heatmap = h337.create({
+  container: document.getElementById("heatmapContainer"),
+  radius: 40,
+  maxOpacity: 0.8,
+  blur: 0.85,
+  gradient: {
+    0.4: "blue",
+    0.6: "lime",
+    0.8: "yellow",
+    1.0: "red"
+  }
+});
+
+/* ===== FAKE DATA ===== */
+const data = {
+  google: {
+    img: "https://i.imgur.com/UYiroys.png",
+    points: [
+      { x: 500, y: 300, value: 90 },
+      { x: 520, y: 320, value: 80 },
+      { x: 480, y: 310, value: 70 }
+    ]
+  },
+  apple: {
+    img: "https://i.imgur.com/zvWTUVu.jpg",
+    points: [
+      { x: 600, y: 350, value: 95 },
+      { x: 700, y: 450, value: 75 }
+    ]
+  },
+  youtube: {
+    img: "https://i.imgur.com/1FJzv8K.jpg",
+    points: [
+      { x: 640, y: 360, value: 100 },
+      { x: 300, y: 700, value: 60 }
+    ]
+  }
+};
+
+/* ===== LOAD SITE ===== */
+function loadSite(name) {
+  document.getElementById("siteImage").src = data[name].img;
+  heatmap.setData({
+    max: 100,
+    data: data[name].points
+  });
+}
+
+/* ===== CONTROLS ===== */
+document.getElementById("intensity").oninput = e => {
+  heatmap.setData({
+    max: 100 * e.target.value,
+    data: heatmap.getData().data
+  });
+};
+
+document.getElementById("colors").onchange = e => {
+  if (e.target.value === "neon") {
+    heatmap.configure({
+      gradient: {0.3:"purple",0.6:"cyan",1:"lime"}
+    });
+  } else if (e.target.value === "ice") {
+    heatmap.configure({
+      gradient: {0.3:"#0ea5e9",0.6:"#38bdf8",1:"#e0f2fe"}
+    });
+  } else {
+    heatmap.configure({
+      gradient: {0.4:"blue",0.6:"lime",0.8:"yellow",1:"red"}
+    });
+  }
+};
+
+/* LOAD DEFAULT */
+loadSite("google");
+</script>
+
+</body>
+</html>
